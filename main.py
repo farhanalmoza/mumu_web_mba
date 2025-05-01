@@ -106,7 +106,7 @@ with st.sidebar:
     st.markdown(
         """
         <div style="border-radius: 10px; padding: 10px; background-color: #e6e6fa; color: #80A6D0">
-            lorem ipsum dolor sit amet
+            Desain sistem ini adalah sistem rekomendasi bahan bangunan yang diterapkan menggunakan algoritma Apriori. Ini memberikan wawasan data dan rekomendasi bahan bangunan yang dipersonalisasi berdasarkan association rules, dengan menggunakan minimum support sebesar 0,05 dan minimum threshold sebesar 1.
         </div>
         """,
         unsafe_allow_html=True
