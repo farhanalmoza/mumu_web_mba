@@ -146,17 +146,17 @@ st.markdown(
 st.subheader("5 Produk dengan Jumlah Transaksi Tertinggi")
 st.bar_chart(top_5_chart)
 
-# Ambil 5 item terbanyak di setiap bulan
-top_items_per_month = result_df.groupby('year_month').apply(lambda x: x.nlargest(5, 'total_kemunculan')).reset_index(drop=True)
-
-months = []
-
-for month in top_items_per_month['year_month'].unique():
-    months.append(month)
 
 # SELECT TOP TRXs PER MONTH
+# Ambil 5 item terbanyak di setiap bulan
+top_trxs_per_month = result_df.groupby('year_month').apply(lambda x: x.nlargest(5, 'total_kemunculan')).reset_index(drop=True)
+months = []
+
+for month in top_trxs_per_month['year_month'].unique():
+    months.append(month)
+
 def getTopTrxPerMonth(month):
-    subset = top_items_per_month[top_items_per_month['year_month'] == month]
+    subset = top_trxs_per_month[top_trxs_per_month['year_month'] == month]
     st.bar_chart(subset, x='nama_barang', x_label="Nama Barang", y='total_kemunculan', y_label="Jumlah Kemunculan", horizontal=True)
     return month
 
@@ -167,11 +167,42 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-st.subheader("5 Produk dengan Jumlah Transaksi Per Bulan")
+st.subheader("5 Produk dengan Jumlah Transaksi Tertinggi Per Bulan")
 topTrxPerMonthOptions = st.selectbox(
     "Pilih bulan:",
-    months
+    months,
+    key="topTrx"
 )
 
 st.write(getTopTrxPerMonth(topTrxPerMonthOptions))
 # END SELECT TOP TRXs PER MONTH
+
+# SELECT TOP SALES PER MONTH
+# Ambil format tahun-bulan
+df_sorted["tahun_bulan"] = df_sorted["date"].dt.to_period("M").astype(str)
+# Hitung jumlah pcs per tahun-bulan dan nama_barang
+monthly_sales = df_sorted.groupby(["tahun_bulan", "nama_barang"]).agg({"pcs": "sum"}).reset_index()
+# Sortir data berdasarkan tahun-bulan dan jumlah pcs yang terjual
+monthly_sales = monthly_sales.sort_values(by=["tahun_bulan", "pcs"], ascending=[True, False])
+# Ambil 5 item terbanyak di setiap bulan
+top_saless_per_month = monthly_sales.groupby('tahun_bulan').apply(lambda x: x.nlargest(5, 'pcs')).reset_index(drop=True)
+
+topSalesMonths = []
+
+for month in top_saless_per_month['tahun_bulan'].unique():
+    topSalesMonths.append(month)
+
+def getTopSalesPerMonth(month):
+    subset = top_saless_per_month[top_saless_per_month['tahun_bulan'] == month]
+    st.bar_chart(subset, x='nama_barang', x_label="Nama Barang", y='pcs', y_label="Jumlah Kemunculan", horizontal=True)
+    return month
+
+st.subheader("5 Produk dengan Jumlah Penjualan Tertinggi Per Bulan")
+topSalesPerMonthOptions = st.selectbox(
+    "Pilih bulan:",
+    topSalesMonths,
+    key="topSales"
+)
+
+st.write(getTopSalesPerMonth(topSalesPerMonthOptions))
+# END SELECT TOP SALES PER MONTH
