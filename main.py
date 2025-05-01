@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # Unduh file CSV dari Google Drive
 output = 'data.csv'  # nama file setelah diunduh
@@ -47,8 +48,8 @@ count.columns = ['nama_barang', 'jumlah_transaksi']
 
 # Mengambil 5 produk dengan jumlah transaksi tertinggi
 top_5 = count.nlargest(5, 'jumlah_transaksi')
-# Step 2: Menyiapkan DataFrame untuk bar chart
-top_5 = top_5.set_index('nama_barang')  # set nama_barang jadi index
+# Agar cocok dengan st.bar_chart, set index ke nama barang
+top_5_chart = top_5.set_index('nama_barang')
 
 
 # STYLE
@@ -114,3 +115,4 @@ with col3:
 
 # Tampilkan judul
 st.subheader("5 Produk dengan Jumlah Transaksi Tertinggi")
+st.bar_chart(top_5_chart)
