@@ -143,7 +143,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-st.subheader("5 Produk dengan Jumlah Transaksi Tertinggi")
+st.subheader("📊 5 Produk dengan Jumlah Transaksi Tertinggi")
 st.bar_chart(top_5_chart)
 
 
@@ -167,7 +167,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-st.subheader("5 Produk dengan Jumlah Transaksi Tertinggi Per Bulan")
+st.subheader("📊 5 Produk dengan Jumlah Transaksi Tertinggi Per Bulan")
 topTrxPerMonthOptions = st.selectbox(
     "Pilih bulan:",
     months,
@@ -197,7 +197,14 @@ def getTopSalesPerMonth(month):
     st.bar_chart(subset, x='nama_barang', x_label="Nama Barang", y='pcs', y_label="Jumlah Kemunculan", horizontal=True)
     return month
 
-st.subheader("5 Produk dengan Jumlah Penjualan Tertinggi Per Bulan")
+st.markdown(
+    """
+    <div style="margin-top: 50px;">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+st.subheader("📊 5 Produk dengan Jumlah Penjualan Tertinggi Per Bulan")
 topSalesPerMonthOptions = st.selectbox(
     "Pilih bulan:",
     topSalesMonths,
@@ -206,3 +213,65 @@ topSalesPerMonthOptions = st.selectbox(
 
 st.write(getTopSalesPerMonth(topSalesPerMonthOptions))
 # END SELECT TOP SALES PER MONTH
+
+
+# ASSOCIATION RULES
+import mlxtend.frequent_patterns.association_rules as association_rules
+import mlxtend.frequent_patterns.apriori as apriori
+
+df1 = pd.read_csv('sorted_by_item.csv', index_col = ['TRX_ID'])
+df1['date'] = pd.to_datetime(df1['date']).dt.strftime('%Y%m%d').astype(int)
+df1HotEncoded =df1.pivot_table(index='TRX_ID', columns='nama_barang', values='pcs')
+df1HotEncoded = df1.pivot_table(index='TRX_ID', columns='nama_barang', values='pcs', aggfunc='sum').fillna(0)
+df1HotEncoded[df1HotEncoded > 0] = 1
+dfSparse = df1HotEncoded.astype(pd.SparseDtype(int, fill_value=0))
+df3 = apriori(dfSparse, min_support=0.005, use_colnames=True)
+df4 = association_rules(df3, metric='lift', min_threshold=1)[['antecedents', 'consequents', 'support', 'confidence', 'lift']]
+
+st.markdown(
+    """
+    <div style="margin-top: 50px;">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+st.subheader("⭐ Association Rules")
+# Buat pilihan format string "if [A] then [B]"
+options = df4.apply(lambda row: f"if {', '.join(row['antecedents'])} then {', '.join(row['consequents'])}", axis=1)
+selected = st.selectbox("Pilih aturan asosiasi:", options, key="rule_selector")
+
+# Tampilkan nilai confidence dari rule yang dipilih
+selected_row = df4.iloc[options[options == selected].index[0]]
+st.markdown(f"**Confidence** dari aturan ini adalah: `{selected_row['confidence']:.4f}`")
+# END ASSOCIATION RULES
+
+
+# ITEM RECOMMENDATION
+st.markdown(
+    """
+    <div style="margin-top: 50px;">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+st.subheader("🎯 Item Recommendation")
+# Buat daftar unik dari antecedents
+unique_antecedents = df4['antecedents'].apply(lambda x: ', '.join(sorted(x))).unique()
+
+# Selectbox untuk memilih item pembelian (antecedents)
+selected_antecedent = st.selectbox("Pilih item yang dibeli:", unique_antecedents, key="rekomendasi_selector")
+
+# Filter rules dengan antecedents yang cocok
+matched_rules = df4[df4['antecedents'].apply(lambda x: ', '.join(sorted(x))) == selected_antecedent]
+
+# Ambil consequents sebagai rekomendasi
+recommendations = matched_rules['consequents'].apply(lambda x: ', '.join(x)).unique()
+
+# Tampilkan rekomendasi
+if len(recommendations) > 0:
+    st.write(f"📦 Rekomendasi produk berdasarkan '{selected_antecedent}':")
+    for item in recommendations:
+        st.markdown(f"- {item}")
+else:
+    st.warning("Tidak ada rekomendasi untuk item tersebut.")
+# END ITEM RECOMMENDATION
