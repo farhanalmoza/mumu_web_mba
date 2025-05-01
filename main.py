@@ -42,6 +42,28 @@ trx_count = len(df_sorted)
 item_count = len(pd.unique(df_sorted['nama_barang']))
 
 
+df_sorted['year_month'] = df_sorted['date'].dt.to_period('M')
+
+# Dictionary untuk menyimpan hasil
+item_counts = {}
+
+# Looping setiap baris untuk menghitung kemunculan item
+for index, row in df_sorted.iterrows():
+    year_month = row['year_month']
+    items = row['nama_barang'].split(', ')  # Pisahkan item jika lebih dari satu
+
+    for item in items:
+        key = (year_month, item)  # Gabungan Tahun-Bulan dan Item sebagai kunci
+        item_counts[key] = item_counts.get(key, 0) + 1  # Tambah jumlah kemunculan
+
+# Ubah hasil ke DataFrame
+result_df = pd.DataFrame([(ym, item, count) for (ym, item), count in item_counts.items()],
+                         columns=['year_month', 'nama_barang', 'total_kemunculan'])
+
+# Urutkan berdasarkan Tahun-Bulan dan total kemunculan terbesar
+result_df = result_df.sort_values(by=['year_month', 'total_kemunculan'], ascending=[True, False])
+
+
 # TOP 5 TRANSACTION
 count = df_sorted['nama_barang'].value_counts().reset_index()
 count.columns = ['nama_barang', 'jumlah_transaksi']
@@ -114,5 +136,42 @@ with col3:
 
 
 # Tampilkan judul
+st.markdown(
+    """
+    <div style="margin-top: 50px;">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 st.subheader("5 Produk dengan Jumlah Transaksi Tertinggi")
 st.bar_chart(top_5_chart)
+
+# Ambil 5 item terbanyak di setiap bulan
+top_items_per_month = result_df.groupby('year_month').apply(lambda x: x.nlargest(5, 'total_kemunculan')).reset_index(drop=True)
+
+months = []
+
+for month in top_items_per_month['year_month'].unique():
+    months.append(month)
+
+# SELECT TOP TRXs PER MONTH
+def getTopTrxPerMonth(month):
+    subset = top_items_per_month[top_items_per_month['year_month'] == month]
+    st.bar_chart(subset, x='nama_barang', x_label="Nama Barang", y='total_kemunculan', y_label="Jumlah Kemunculan", horizontal=True)
+    return month
+
+st.markdown(
+    """
+    <div style="margin-top: 50px;">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+st.subheader("5 Produk dengan Jumlah Transaksi Per Bulan")
+topTrxPerMonthOptions = st.selectbox(
+    "Pilih bulan:",
+    months
+)
+
+st.write(getTopTrxPerMonth(topTrxPerMonthOptions))
+# END SELECT TOP TRXs PER MONTH
