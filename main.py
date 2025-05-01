@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 
 # Unduh file CSV dari Google Drive
 output = 'data.csv'  # nama file setelah diunduh
@@ -103,7 +102,15 @@ st.markdown("""
 
 
 with st.sidebar:
-    st.title("Market Basket Analysis")
+    st.title("About")
+    st.markdown(
+        """
+        <div style="border-radius: 10px; padding: 10px; background-color: #e6e6fa; color: #80A6D0">
+            lorem ipsum dolor sit amet
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # VIEW
 st.title("Market Basket Analysis")
